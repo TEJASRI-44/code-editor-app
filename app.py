@@ -1,12 +1,12 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import subprocess
 import tempfile
 import os
-from flask_cors import CORS
-
 
 app = Flask(__name__)
-CORS(app)
+# Allow both localhost (for development) and deployed frontend
+CORS(app, origins=["http://localhost:3000", "https://your-frontend-domain.com"])
 
 @app.route('/run', methods=['POST'])
 def run_code():
@@ -25,6 +25,7 @@ def run_code():
                 capture_output=True,
                 timeout=5
             )
+
             output = result.stdout.decode()
             error = result.stderr.decode()
 
@@ -36,5 +37,7 @@ def run_code():
     except Exception as e:
         return jsonify({"output": "", "error": str(e)})
 
+# Render needs this to bind to the correct port
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
